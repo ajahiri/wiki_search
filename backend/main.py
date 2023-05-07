@@ -6,7 +6,7 @@ import sqlite3
 import os
 import json
 
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = ""
 
 app = Flask(__name__)
 
