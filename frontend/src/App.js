@@ -54,7 +54,7 @@ function App() {
     setLoadingContent(true);
     setCurrentPage(0);
     fetch(
-      `http://backend.wiki-search.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${0}&use_llm=${useLLM}`,
+      `https://backend.wiki-search.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${0}&use_llm=${useLLM}`,
       { method: "GET" }
     )
       .then((response) => response.json())
