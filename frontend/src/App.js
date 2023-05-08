@@ -35,7 +35,7 @@ function App() {
     setCurrentPage(page);
     window.scrollTo(0, 0);
     fetch(
-      `https://backend.wiki-search.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${
+      `https://wikisearchbackend.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${
         (page || 0) * limit
       }&use_llm=${useLLM}`,
       { method: "GET" }
@@ -54,7 +54,7 @@ function App() {
     setLoadingContent(true);
     setCurrentPage(0);
     fetch(
-      `https://backend.wiki-search.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${0}&use_llm=${useLLM}`,
+      `https://wikisearchbackend.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${0}&use_llm=${useLLM}`,
       { method: "GET" }
     )
       .then((response) => response.json())
