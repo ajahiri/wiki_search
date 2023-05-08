@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
@@ -6,10 +7,8 @@ import sqlite3
 import os
 import json
 
-os.environ["OPENAI_API_KEY"] = ""
-
 app = Flask(__name__)
-
+CORS(app)
 
 # dev run: flask --app main.py --debug run
 
@@ -74,6 +73,7 @@ def search():
         query = args.get('query')
         limit = args.get('limit')
         use_llm = int(args.get('use_llm'))
+        offset = args.get('offset')
 
         # optionally, use openai api (chatgpt) to optimise a user's search query, this may give undesired results hence it being an optional flag
         if use_llm == 1:
@@ -122,9 +122,13 @@ def search():
         db = get_db_connection()
 
         # get all the parent links (main links)
+        node_parent_list_count = db.execute("SELECT COUNT(*) from node_parent_list WHERE title LIKE '%' || ? || '%' OR abstract "
+                                      "LIKE '%' || ? || '%'"
+                                      "LIMIT -1 OFFSET 0", [query, query]).fetchone()[0]
+        print(node_parent_list_count)
         node_parent_list = db.execute("SELECT * from node_parent_list WHERE title LIKE '%' || ? || '%' OR abstract "
                                       "LIKE '%' || ? || '%'"
-                                      "LIMIT ?", [query, query, limit]).fetchall()
+                                      "LIMIT ? OFFSET ?", [query, query, limit, offset]).fetchall()
 
         parent_list = [dict(row) for row in node_parent_list]
 
@@ -142,7 +146,8 @@ def search():
 
         return jsonify({
             'success': True,
-            'data': parent_list
+            'data': parent_list,
+            'result_count': node_parent_list_count
         })
     except Exception as e:
         print("An exception occurred")
@@ -150,7 +155,3 @@ def search():
             'success': False,
             'error': str(e)
         })
-
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0')
