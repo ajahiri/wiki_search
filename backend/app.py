@@ -12,6 +12,10 @@ CORS(app)
 
 # dev run: flask --app main.py --debug run
 
+@app.route('/')
+def hello_world():
+    return 'Hello!'
+
 def get_db_connection():
     conn = sqlite3.connect('wiki_pagerank.db')
     conn.row_factory = sqlite3.Row

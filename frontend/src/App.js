@@ -35,7 +35,7 @@ function App() {
     setCurrentPage(page);
     window.scrollTo(0, 0);
     fetch(
-      `http://localhost:5000/search?query=${query}&limit=${limit}&offset=${
+      `https://backend.wiki-search.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${
         (page || 0) * limit
       }&use_llm=${useLLM}`,
       { method: "GET" }
