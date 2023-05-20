@@ -21,54 +21,6 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-
-@app.route("/generate_average_pageranks", methods=['GET'])
-def generate_average_pageranks():
-    try:
-        db = get_db_connection()
-
-        check_col = db.execute("SELECT COUNT(*) FROM pragma_table_info('node_parent_list') WHERE name = "
-                               "'child_avg_pagerank'")
-        res = check_col.fetchone()[0]
-
-        if res == 0:
-            db.execute("ALTER TABLE node_parent_list ADD COLUMN child_avg_pagerank REAL")
-
-        # Commit the changes
-        db.commit()
-
-        cursor = db.cursor()
-
-        cursor.execute("""
-            CREATE TEMP VIEW child_nodes_pageranked AS
-            SELECT *
-            FROM node_list INNER JOIN node_pageranks ON node_list.node_id = node_pageranks.node_id
-        """)
-
-        cursor.execute("""
-            UPDATE node_parent_list
-            SET child_avg_pagerank = (
-                SELECT AVG(child_nodes_pageranked.pagerank)
-                FROM child_nodes_pageranked
-                WHERE child_nodes_pageranked.url LIKE node_parent_list.url || '#' || '%'
-            )
-        """)
-
-        db.commit()
-
-        cursor.close()
-        db.close()
-        return jsonify({
-            'success': True,
-        })
-    except Exception as e:
-        print("An exception occurred")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
-
-
 @app.route("/search", methods=['GET'])
 def search():
     args = request.args
@@ -152,6 +104,54 @@ def search():
             'success': True,
             'data': parent_list,
             'result_count': node_parent_list_count
+        })
+    except Exception as e:
+        print("An exception occurred")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+
+# app route is not used, couldn't get it to work and generate pageranks for parent links 
+# @app.route("/generate_average_pageranks", methods=['GET'])
+def generate_average_pageranks():
+    try:
+        db = get_db_connection()
+
+        check_col = db.execute("SELECT COUNT(*) FROM pragma_table_info('node_parent_list') WHERE name = "
+                               "'child_avg_pagerank'")
+        res = check_col.fetchone()[0]
+
+        if res == 0:
+            db.execute("ALTER TABLE node_parent_list ADD COLUMN child_avg_pagerank REAL")
+
+        # Commit the changes
+        db.commit()
+
+        cursor = db.cursor()
+
+        cursor.execute("""
+            CREATE TEMP VIEW child_nodes_pageranked AS
+            SELECT *
+            FROM node_list INNER JOIN node_pageranks ON node_list.node_id = node_pageranks.node_id
+        """)
+
+        cursor.execute("""
+            UPDATE node_parent_list
+            SET child_avg_pagerank = (
+                SELECT AVG(child_nodes_pageranked.pagerank)
+                FROM child_nodes_pageranked
+                WHERE child_nodes_pageranked.url LIKE node_parent_list.url || '#' || '%'
+            )
+        """)
+
+        db.commit()
+
+        cursor.close()
+        db.close()
+        return jsonify({
+            'success': True,
         })
     except Exception as e:
         print("An exception occurred")

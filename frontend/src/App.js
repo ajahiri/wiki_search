@@ -20,6 +20,7 @@ function App() {
   const [useLLM, setLLM] = useState(0);
   const [numResults, setNumResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
+  const [error, setError] = useState(false);
 
   const toggleLLM = () => {
     setLLM((prevVal) => (prevVal == 1 ? 0 : 1));
@@ -31,40 +32,40 @@ function App() {
 
   const changePage = (event, pageNum) => {
     const page = pageNum - 1;
+    setError(false);
     setLoadingContent(true);
     setCurrentPage(page);
     window.scrollTo(0, 0);
-    fetch(
-      `https://wikisearchbackend.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${
+    doFetch(
+      `query=${query}&limit=${limit}&offset=${
         (page || 0) * limit
-      }&use_llm=${useLLM}`,
-      { method: "GET" }
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        setData(data?.data || []);
-        setNumResults(data?.result_count || 0);
-        setLoadingContent(false);
-      })
-      .catch((err) => console.log(err));
+      }&use_llm=${useLLM}`
+    );
   };
 
   const onSearch = (e) => {
+    setError(false);
     setHasSearched(true);
     setLoadingContent(true);
     setCurrentPage(0);
-    fetch(
-      `https://wikisearchbackend.arianjahiri.com/search?query=${query}&limit=${limit}&offset=${0}&use_llm=${useLLM}`,
-      { method: "GET" }
-    )
+    window.scrollTo(0, 0);
+    doFetch(`query=${query}&limit=${limit}&offset=${0}&use_llm=${useLLM}`);
+  };
+
+  const doFetch = (paramString) => {
+    fetch(`https://wikisearchbackend.arianjahiri.com/search?${paramString}`, {
+      method: "GET",
+    })
       .then((response) => response.json())
       .then((data) => {
-        window.scrollTo(0, 0);
         setData(data?.data || []);
         setNumResults(data?.result_count || 0);
         setLoadingContent(false);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        setError(true);
+        console.log(err);
+      });
   };
 
   return (
@@ -132,88 +133,96 @@ function App() {
             }}
             exit={{ opacity: 0 }}
           >
-            {loadingContent ? (
-              <>
-                <motion.div style={{ marginBottom: 30 }}>
-                  <div style={{ marginRight: 100 }}>
-                    <Skeleton enableAnimation={true} count={2} />
-                  </div>
-                  <div style={{ marginLeft: 40 }}>
-                    <Skeleton count={3} />
-                  </div>
-                </motion.div>
-                <motion.div style={{ marginBottom: 30 }}>
-                  <div style={{ marginRight: 100 }}>
-                    <Skeleton count={2} />
-                  </div>
-                  <div style={{ marginLeft: 40 }}>
-                    <Skeleton count={3} />
-                  </div>
-                </motion.div>
-                <motion.div style={{ marginBottom: 30 }}>
-                  <div style={{ marginRight: 100 }}>
-                    <Skeleton count={2} />
-                  </div>
-                  <div style={{ marginLeft: 40 }}>
-                    <Skeleton count={3} />
-                  </div>
-                </motion.div>
-              </>
-            ) : (
+            {error ? (
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <p>
-                  {numResults} results were found. Showing page{" "}
-                  {currentPage + 1} of {Math.ceil(numResults / limit)}
-                </p>
-                {data &&
-                  data?.map((item) => {
-                    return (
-                      <div key={item.url}>
-                        <div style={{ marginRight: 100 }}>
-                          <a href={item.url} target="_blank">
-                            <h3>{item.title}</h3>
-                          </a>
-                          <p>{item.abstract}</p>
-                        </div>
-                        <div style={{ marginLeft: 40 }}>
-                          <ul>
-                            {item?.sub_links?.map((subLink) => {
-                              return (
-                                <li key={subLink.node_id}>
-                                  <Tooltip
-                                    title={
-                                      "Pagerank: " +
-                                      subLink.pagerank.toExponential()
-                                    }
-                                    placement="right"
-                                  >
-                                    <a href={subLink.url} target="_blank">
-                                      {subLink.anchor}
-                                    </a>
-                                  </Tooltip>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      </div>
-                    );
-                  })}
-                <div
-                  style={{
-                    marginLeft: "auto",
-                    marginRight: "auto",
-                    marginTop: 20,
-                    marginBottom: 20,
-                  }}
-                >
-                  <Pagination
-                    count={Math.ceil(numResults / limit)}
-                    page={currentPage + 1}
-                    onChange={changePage}
-                  />
-                </div>
+                <p>Error while conducting search. Please try again later.</p>
               </div>
+            ) : (
+              <>
+                {loadingContent ? (
+                  <>
+                    <motion.div style={{ marginBottom: 30 }}>
+                      <div style={{ marginRight: 100 }}>
+                        <Skeleton enableAnimation={true} count={2} />
+                      </div>
+                      <div style={{ marginLeft: 40 }}>
+                        <Skeleton count={3} />
+                      </div>
+                    </motion.div>
+                    <motion.div style={{ marginBottom: 30 }}>
+                      <div style={{ marginRight: 100 }}>
+                        <Skeleton count={2} />
+                      </div>
+                      <div style={{ marginLeft: 40 }}>
+                        <Skeleton count={3} />
+                      </div>
+                    </motion.div>
+                    <motion.div style={{ marginBottom: 30 }}>
+                      <div style={{ marginRight: 100 }}>
+                        <Skeleton count={2} />
+                      </div>
+                      <div style={{ marginLeft: 40 }}>
+                        <Skeleton count={3} />
+                      </div>
+                    </motion.div>
+                  </>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <p>
+                      {numResults} results were found. Showing page{" "}
+                      {currentPage + 1} of {Math.ceil(numResults / limit)}
+                    </p>
+                    {data &&
+                      data?.map((item) => {
+                        return (
+                          <div key={item.url}>
+                            <div style={{ marginRight: 100 }}>
+                              <a href={item.url} target="_blank">
+                                <h3>{item.title}</h3>
+                              </a>
+                              <p>{item.abstract}</p>
+                            </div>
+                            <div style={{ marginLeft: 40 }}>
+                              <ul>
+                                {item?.sub_links?.map((subLink) => {
+                                  return (
+                                    <li key={subLink.node_id}>
+                                      <Tooltip
+                                        title={
+                                          "Pagerank: " +
+                                          subLink.pagerank.toExponential()
+                                        }
+                                        placement="right"
+                                      >
+                                        <a href={subLink.url} target="_blank">
+                                          {subLink.anchor}
+                                        </a>
+                                      </Tooltip>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    <div
+                      style={{
+                        marginLeft: "auto",
+                        marginRight: "auto",
+                        marginTop: 20,
+                        marginBottom: 20,
+                      }}
+                    >
+                      <Pagination
+                        count={Math.ceil(numResults / limit)}
+                        page={currentPage + 1}
+                        onChange={changePage}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         )}
